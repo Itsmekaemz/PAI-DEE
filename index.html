@@ -1,0 +1,939 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PAI DEE ไปดี</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mitr:wght@400;500&display=swap">
+<style>
+/* Layout: แผงวางแผน (จุดหมาย วิธีเดินทาง งบ) อยู่ซ้ายและติดขอบบนเมื่อเลื่อน, ฝั่งขวาเป็นไทม์ไลน์ของแผน การแชร์ และกระดานแผนที่บันทึกไว้; มือถือเรียงเป็นคอลัมน์เดียว
+   สีเขียว = เส้นทางและปุ่มหลัก, สีชมพู = รถบนถนน (วิน สองแถว รถเมล์) และสถานะเกินงบ, สีรถไฟฟ้าแต่ละสายยังใช้สีจริง */
+:root{
+  --bg:#f1f8f3; --surface:#ffffff; --ink:#10261a; --muted:#52695b; --line:#c8dacf; --soft:#e3efe7;
+  --accent:#12864f; --accent-ink:#ffffff; --pink:#e23c86; --on-pink:#ffffff; --pink-soft:#fde4ef; --pink-ink:#8b1449;
+  --walk:#9db0a4; --warn:#7a4300; --warn-bg:#fff1d6; --ok:#17663a;
+  --display:'Mitr','IBM Plex Sans Thai','Noto Sans Thai',sans-serif;
+  --body:'IBM Plex Sans Thai','Noto Sans Thai','Sarabun',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1812; --surface:#14241b; --ink:#e6f2ea; --muted:#8fa89a; --line:#294236; --soft:#1b3027;
+    --accent:#4cc888; --accent-ink:#04210f; --pink:#ff7ab8; --on-pink:#2a0a1a; --pink-soft:#3a1a2a; --pink-ink:#ffc2dd;
+    --walk:#6a7f72; --warn:#ffd79a; --warn-bg:#3a2a0e; --ok:#6fd39a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1812; --surface:#14241b; --ink:#e6f2ea; --muted:#8fa89a; --line:#294236; --soft:#1b3027;
+  --accent:#4cc888; --accent-ink:#04210f; --pink:#ff7ab8; --on-pink:#2a0a1a; --pink-soft:#3a1a2a; --pink-ink:#ffc2dd;
+  --walk:#6a7f72; --warn:#ffd79a; --warn-bg:#3a2a0e; --ok:#6fd39a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-block:0 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.stripe{display:flex;height:6px;margin-inline:calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)))}
+.stripe i:first-child{flex:3;background:var(--accent)} .stripe i:last-child{flex:1;background:var(--pink)}
+.wrap{max-width:1120px;margin:0 auto}
+header.top{display:flex;align-items:center;gap:14px;padding:22px 0 18px;flex-wrap:wrap}
+header.top svg{flex:none;width:48px;height:48px}
+.brand{font-family:var(--display);font-weight:500;font-size:30px;line-height:1;margin:0;letter-spacing:.5px}
+.brand span{color:var(--pink)}
+header.top p{margin:4px 0 0;color:var(--muted);font-size:14px;max-width:60ch}
+.layout{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){.layout{grid-template-columns:392px minmax(0,1fr);align-items:start}.planner{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}}
+.planner{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec h2{font-size:12px;font-weight:600;letter-spacing:.07em;color:var(--muted);margin:0 0 8px;text-transform:uppercase}
+.sec .hint{margin:6px 0 0}
+.stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.stop{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px 10px;align-items:start}
+.badge{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:14px;background:var(--soft);color:var(--ink);margin-top:5px}
+.badge.start{background:var(--accent);color:var(--accent-ink)}
+.badge.end{background:var(--pink);color:var(--on-pink)}
+.sfield{position:relative;min-width:0}
+.sin{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.sin::placeholder{color:var(--muted)}
+.sctl{grid-column:2;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:-2px}
+.sctl button,.sctl select{font:inherit;font-size:13px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer;padding:0 10px}
+.sctl button{width:34px;padding:0}
+.sctl button:disabled{opacity:.35;cursor:default}
+.sctl button:not(:disabled):hover{background:var(--soft)}
+.stay{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.suggest{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;max-height:280px;overflow:auto;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.suggest li{padding:8px 10px;border-radius:7px;cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.suggest li:hover,.suggest li.on{background:var(--soft)}
+.suggest .sub{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.dots{display:inline-flex;gap:3px}.dots i{width:9px;height:9px;border-radius:50%;display:block}
+.add{font:inherit;font-weight:500;width:100%;margin-top:10px;padding:9px;border:1.5px dashed var(--accent);border-radius:10px;background:transparent;color:var(--accent);cursor:pointer}
+.add:hover{background:var(--soft)} .add:disabled{opacity:.4;cursor:default}
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes button{font:inherit;font-size:14px;font-weight:500;padding:8px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.modes button svg{width:16px;height:16px}
+.modes button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.modes button[data-mode=win][aria-pressed=true],.modes button[data-mode=bus][aria-pressed=true],.modes button[data-mode=song][aria-pressed=true]{background:var(--pink);border-color:var(--pink);color:var(--on-pink)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;font-weight:500;padding:9px 6px;border:0;background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lab{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.num{width:100%;font:inherit;font-size:16px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.sw{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.sw+.sw{margin-top:10px}
+.sw input{appearance:none;-webkit-appearance:none;flex:none;width:40px;height:24px;border-radius:12px;background:var(--walk);position:relative;margin:1px 0 0;cursor:pointer;transition:background .15s}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked{background:var(--accent)}.sw input:checked::after{transform:translateX(16px)}
+.sw span{font-size:14px}.sw small{display:block;color:var(--muted);font-size:12.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card.sumcard{border-color:var(--accent);gap:14px}
+.sumtop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.m small{display:block;font-size:12px;font-weight:600;letter-spacing:.05em;color:var(--muted)}
+.m b{display:block;font-size:26px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.m b em{font-style:normal;font-size:13px;font-weight:500;color:var(--muted);margin-left:2px}
+.m span{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meter{height:12px;border-radius:6px;background:var(--soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.meter.over i{background:var(--pink)}
+.bline{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;font-variant-numeric:tabular-nums}
+.bline .ok{color:var(--ok);font-weight:600}.bline .bad{color:var(--pink-ink);font-weight:600;background:var(--pink-soft);padding:1px 8px;border-radius:6px}
+.note{margin:0;font-size:13px;padding:8px 11px;border-radius:9px;background:var(--soft)}
+.note.pink{background:var(--pink-soft);color:var(--pink-ink)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.leg-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.leg-h h3{margin:0;font-family:var(--display);font-weight:400;font-size:17px;line-height:1.35;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ab{font-family:var(--body);font-size:12px;font-weight:600;min-width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;background:var(--soft)}
+.ab.s{background:var(--accent);color:var(--accent-ink)}.ab.e{background:var(--pink);color:var(--on-pink)}
+.times{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lt{text-align:right;font-variant-numeric:tabular-nums}
+.lt b{font-size:20px;font-weight:600}.lt small{display:block;font-size:12.5px;color:var(--muted)}
+.bar{display:flex;gap:2px;height:10px}.bar span{border-radius:5px;min-width:6px}
+.bar .walk,.bar .switch,.bar .walkx{background:var(--walk)}
+.bar .win,.bar .song,.bar .bus{background:var(--pink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12.5px;font-weight:600;padding:2px 9px;border-radius:6px}
+.chip.plain{background:var(--soft);color:var(--ink)}.chip.road{background:var(--pink-soft);color:var(--pink-ink)}
+.tag{font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--pink);color:var(--on-pink)}
+details summary{cursor:pointer;font-weight:500;color:var(--accent);list-style:none;padding:2px 0}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+.legs{list-style:none;margin:10px 0 0;padding:0}
+.leg{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;position:relative;padding-bottom:14px}
+.leg:last-child{padding-bottom:0}
+.leg::before{content:"";position:absolute;left:14px;top:30px;bottom:0;width:3px;background:var(--c,var(--walk));border-radius:2px}
+.leg:last-child::before{display:none}
+.ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--c,var(--walk));color:var(--ic,#fff)}
+.ic svg{width:18px;height:18px}
+.leg h4{margin:0;font-size:14.5px;font-weight:600;line-height:1.35}.leg p{margin:0;font-size:13px;color:var(--muted)}
+.rt{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}.rt b{display:block;font-size:14px}
+.alts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.alt{font:inherit;font-size:13.5px;text-align:left;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);cursor:pointer}
+.alt:hover{background:var(--soft)}.alt[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}
+.alt span:last-child{font-variant-numeric:tabular-nums;color:var(--muted)}
+.linkbtn{font:inherit;font-size:13px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+.stayrow{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted);padding:0 4px}
+.stayrow::before,.stayrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:22px}
+.empty h2{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:18px}
+.share h2,.board h2,.notes h2{margin:0;font-family:var(--display);font-weight:400;font-size:18px}
+.share p,.board p{margin:0}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:600;padding:10px 16px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.alt2{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.status{font-size:13.5px;color:var(--ok);min-height:1.3em}
+textarea.pre{width:100%;min-height:190px;font:inherit;font-size:14px;line-height:1.5;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pitem{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.pitem b{display:block}.pitem span{font-size:13px;color:var(--muted)}
+.pitem .btns{gap:10px}
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13.5px;margin:10px 0 12px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.ok{color:var(--ok);font-weight:600}td.es{color:var(--warn);font-weight:600}
+.src{margin:12px 0 0;padding-left:18px;font-size:13px}.src a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:520px){.sumtop{grid-template-columns:1fr 1fr}.sumtop .m:last-child{grid-column:1 / -1}.m b{font-size:23px}.brand{font-size:26px}.frow,.row2{grid-template-columns:1fr}.leg{grid-template-columns:30px minmax(0,1fr)}.rt{grid-column:2;text-align:left;display:flex;gap:10px}.rt b{display:inline}}
+</style>
+<div class="stripe" aria-hidden="true"><i></i><i></i></div>
+<div class="wrap">
+<header class="top">
+  <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#12864f"/><path d="M10 34 C18 34 18 14 26 14 L38 14" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="34" r="4.5" fill="#fff"/><circle cx="37" cy="14" r="6" fill="#ff5fa2" stroke="#fff" stroke-width="3"/></svg>
+  <div>
+    <h1 class="brand">PAI <span>DEE</span> <small style="font-size:15px;font-weight:400;font-family:var(--body);color:var(--muted)">ไปดี</small></h1>
+    <p>วางแผนเดินทางในกรุงเทพและปริมณฑลหลายจุดในที่เดียว ดูเส้นทาง ค่าใช้จ่าย เวลา แล้วแชร์ให้คนที่บ้านหรือเพื่อนได้</p>
+  </div>
+</header>
+<div class="layout">
+  <section class="planner" aria-label="ตั้งค่าแผน">
+    <div class="sec">
+      <h2>จุดหมาย</h2>
+      <ol class="stops" id="stops"></ol>
+      <button type="button" class="add" id="addStop">+ เพิ่มจุดแวะ</button>
+      <label class="sw" style="margin-top:12px"><input type="checkbox" id="round"><span>กลับมาที่ต้นทาง<small>เพิ่มเที่ยวกลับจากจุดสุดท้าย</small></span></label>
+    </div>
+    <div class="sec">
+      <h2>เดินทางด้วย</h2>
+      <div class="modes" id="modes" role="group" aria-label="วิธีเดินทางที่ยอมรับ"></div>
+      <p class="hint">เลือกได้หลายแบบ ระบบจะต่อให้เอง เช่น วินไปสถานีแล้วขึ้นรถไฟฟ้า</p>
+    </div>
+    <div class="sec">
+      <h2>ให้ความสำคัญกับ</h2>
+      <div class="seg" id="pri" role="group" aria-label="ความสำคัญ">
+        <button type="button" data-pri="cost" aria-pressed="false">ประหยัด</button>
+        <button type="button" data-pri="time" aria-pressed="true">เร็ว</button>
+        <button type="button" data-pri="comfy" aria-pressed="false">สบาย</button>
+      </div>
+      <p class="hint" id="priHint"></p>
+    </div>
+    <div class="sec">
+      <h2>งบและเวลา</h2>
+      <div class="row2">
+        <div><label class="lab" for="budget">งบทั้งทริป (บาท)</label><input class="num" type="number" inputmode="numeric" min="0" step="10" id="budget" placeholder="ไม่จำกัด"></div>
+        <div><label class="lab" for="start">ออกเดินทาง</label><input class="num" type="time" id="start" value="09:00"></div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="sw"><input type="checkbox" id="peak"><span>ช่วงรถติด (เช้า/เย็น)<small>วิน รถเมล์ และสองแถวใช้เวลานานขึ้น</small></span></label>
+        <label class="sw"><input type="checkbox" id="cap20"><span>ใช้สิทธิ์รถไฟฟ้า 20 บาทตลอดสาย<small>สำหรับผู้ลงทะเบียนในแอปทางรัฐแล้ว ตรวจสถานะแต่ละสายก่อนเดินทาง</small></span></label>
+      </div>
+    </div>
+  </section>
+  <div class="main">
+    <div id="plan" aria-live="polite" style="display:flex;flex-direction:column;gap:14px;min-width:0"></div>
+    <section class="card share" aria-label="แชร์แผน">
+      <h2>แชร์แผนนี้</h2>
+      <p class="hint">คัดลอกเป็นข้อความส่งทาง LINE ได้ทันที หรือบันทึกไว้ในกระดานเพื่อให้คนที่เปิดลิงก์เว็บนี้ได้เห็นแผน</p>
+      <div class="frow">
+        <div><label class="lab" for="ptitle">ชื่อแผน</label><input class="num" type="text" id="ptitle" value="แผนเดินทางของฉัน" maxlength="60"></div>
+        <div><label class="lab" for="pauthor">ชื่อผู้วางแผน</label><input class="num" type="text" id="pauthor" placeholder="เช่น แก้ม" maxlength="30"></div>
+      </div>
+      <textarea class="pre" id="sharetext" readonly aria-label="ข้อความแผนสำหรับคัดลอก"></textarea>
+      <div class="btns">
+        <button type="button" class="btn" id="copy">คัดลอกข้อความ</button>
+        <button type="button" class="btn alt2" id="save" hidden>บันทึกลงกระดาน</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+    </section>
+    <section class="card board" id="boardSec" aria-label="แผนที่บันทึกไว้" hidden>
+      <h2>แผนที่บันทึกไว้</h2>
+      <p class="hint">ทุกคนที่เปิดหน้านี้ได้ เห็นรายการเดียวกัน กดเปิดเพื่อดูหรือแก้ต่อในหน้าวางแผน</p>
+      <ul class="plist" id="plist"></ul>
+    </section>
+    <section class="notes" aria-label="ที่มาของข้อมูล">
+      <h2>ข้อมูลและข้อจำกัด</h2>
+      <p class="warn">เวลาและค่าโดยสารเป็นค่าประมาณสำหรับวางแผนเบื้องต้น ไม่ใช่ข้อมูลเรียลไทม์ ไม่มีเลขสายรถเมล์ เลือกได้เฉพาะสถานีรถไฟฟ้าและสถานที่ยอดนิยมในรายการ และยังไม่รวมสายสีส้มกับส่วนต่อขยายบางช่วง ก่อนเดินทางจริงควรเช็กกับผู้ให้บริการอีกครั้ง</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>ประเภท</th><th>ที่ใช้คำนวณ</th><th>สถานะข้อมูล</th></tr></thead>
+          <tbody>
+            <tr><td>MRT สายสีน้ำเงิน</td><td>17–44 บาท ตามจำนวนสถานี</td><td class="ok">ยืนยันแล้ว ใช้ตั้งแต่ 3 ก.ค. 2569</td></tr>
+            <tr><td>MRT สายสีม่วง</td><td>14–42 บาท</td><td class="es">ช่วงราคายืนยันแล้ว ราคาแต่ละสถานีเป็นค่าประมาณ</td></tr>
+            <tr><td>BTS สุขุมวิท/สีลม</td><td>เริ่ม 17 บาท เชื่อมสายหลักกับส่วนต่อขยายไม่เกิน 65 บาท</td><td class="es">ประมาณจากจำนวนสถานี</td></tr>
+            <tr><td>แอร์พอร์ต เรล ลิงก์ สีแดง ทอง เหลือง ชมพู</td><td>สูตรประมาณตามจำนวนสถานี</td><td class="es">ค่าประมาณ</td></tr>
+            <tr><td>รถเมล์</td><td>ธรรมดา 8–10 บาท ปรับอากาศ 12–25 บาท</td><td class="es">อ้างอิงประกาศปี 2562 อาจเปลี่ยนแล้ว</td></tr>
+            <tr><td>วินมอเตอร์ไซค์</td><td>25 บาทใน 2 กม.แรก แล้วเพิ่มตามระยะ ช่วงราคาบวกราว 25% เผื่อราคาที่ตกลงกัน</td><td class="es">อ้างอิงประกาศปี 2559 ราคาจริงตกลงกับคนขับ</td></tr>
+            <tr><td>สองแถว</td><td>10–20 บาท จ่ายกับคนขับ</td><td class="es">ค่าประมาณจากแหล่งเดียว</td></tr>
+            <tr><td>รถไฟฟ้า 20 บาทตลอดสาย</td><td>ครม. อนุมัติให้เริ่ม 1 ต.ค. 2568 สำหรับผู้มีสัญชาติไทยที่ลงทะเบียนในแอปทางรัฐ</td><td class="es">ยังตรวจสถานะการใช้งานจริงของแต่ละสายไม่ได้</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="src">
+        <li><a href="https://www.thaipbs.or.th/news/content/506400" target="_blank" rel="noopener">Thai PBS: MRT สายสีน้ำเงินอัตราใหม่ 17–44 บาท</a></li>
+        <li><a href="https://www.thaipbs.or.th/news/content/352924" target="_blank" rel="noopener">Thai PBS: เงื่อนไขรถไฟฟ้า 20 บาทตลอดสาย</a></li>
+        <li><a href="https://nayoo.co/blogs/center/bts-skytrain-fee" target="_blank" rel="noopener">Nayoo: ค่าโดยสาร BTS ปี 2569</a></li>
+        <li><a href="https://www.khaosod.co.th/economics/news_2409729" target="_blank" rel="noopener">ข่าวสด: ค่าโดยสารรถเมล์ปี 2562</a></li>
+        <li><a href="https://www.matichon.co.th/local/news_84151" target="_blank" rel="noopener">มติชน: ค่าโดยสารวินมอเตอร์ไซค์ตามประกาศ</a></li>
+      </ul>
+    </section>
+  </div>
+</div>
+</div>
+<script>
+/* ---------- ข้อมูลเครือข่าย + การคำนวณเส้นทาง (ไม่ผูกกับ DOM) ---------- */
+const LINES = {
+  bts:   {name:'BTS สายสุขุมวิท',  op:'bts',    bg:'#7cc242', fg:'#10200a', hop:2.1, km:1.1, wait:4},
+  sil:   {name:'BTS สายสีลม',      op:'bts',    bg:'#0f6b3b', fg:'#ffffff', hop:2.1, km:1.1, wait:4},
+  blue:  {name:'MRT สายสีน้ำเงิน', op:'blue',   bg:'#1e3f96', fg:'#ffffff', hop:2.3, km:1.3, wait:4},
+  purple:{name:'MRT สายสีม่วง',    op:'purple', bg:'#6b2f93', fg:'#ffffff', hop:2.6, km:1.6, wait:6},
+  arl:   {name:'แอร์พอร์ต เรล ลิงก์', op:'arl', bg:'#a51c30', fg:'#ffffff', hop:3.7, km:4.0, wait:8},
+  red:   {name:'รถไฟสายสีแดง',     op:'red',    bg:'#e0433a', fg:'#ffffff', hop:3.4, km:3.3, wait:10},
+  gold:  {name:'สายสีทอง',         op:'gold',   bg:'#c9a227', fg:'#201800', hop:2.5, km:0.6, wait:5},
+  yellow:{name:'สายสีเหลือง',      op:'yellow', bg:'#f2c500', fg:'#1f1900', hop:2.3, km:1.3, wait:5},
+  pink:  {name:'สายสีชมพู',        op:'pink',   bg:'#e5559b', fg:'#ffffff', hop:2.3, km:1.3, wait:5}
+};
+
+/* รหัส:ชื่อสถานี:ลำดับตามแนวสาย (ใช้นับจำนวนสถานี) — สายที่ระบุเฉพาะสถานีหลัก ลำดับคือเลขจริงของสถานี */
+const SEQ = {
+  bts: 'N23:คูคต:0,N20:สะพานใหม่:3,N17:วัดพระศรีมหาธาตุ:6,N13:ม.เกษตรศาสตร์:10,N11:รัชโยธิน:12,N9:ห้าแยกลาดพร้าว:14,N8:หมอชิต:15,N7:สะพานควาย:16,N5:อารีย์:18,N4:สนามเป้า:19,N3:อนุสาวรีย์ชัยสมรภูมิ:20,N2:พญาไท:21,N1:ราชเทวี:22,CEN:สยาม:23,E1:ชิดลม:24,E2:เพลินจิต:25,E3:นานา:26,E4:อโศก:27,E5:พร้อมพงษ์:28,E6:ทองหล่อ:29,E7:เอกมัย:30,E8:พระโขนง:31,E9:อ่อนนุช:32,E10:บางจาก:33,E11:ปุณณวิถี:34,E12:อุดมสุข:35,E13:บางนา:36,E14:แบริ่ง:37,E15:สำโรง:38,E19:ปากน้ำ:42,E23:เคหะสมุทรปราการ:46',
+  sil: 'W1:สนามกีฬาแห่งชาติ:0,CEN:สยาม:1,S1:ราชดำริ:2,S2:ศาลาแดง:3,S3:ช่องนนทรี:4,S4:เซนต์หลุยส์:5,S5:สุรศักดิ์:6,S6:สะพานตากสิน:7,S7:กรุงธนบุรี:8,S8:วงเวียนใหญ่:9,S9:โพธิ์นิมิตร:10,S10:ตลาดพลู:11,S11:วุฒากาศ:12,S12:บางหว้า:13',
+  blueMain: 'BL01:ท่าพระ:1,BL02:จรัญฯ 13:2,BL03:ไฟฉาย:3,BL04:บางขุนนนท์:4,BL05:บางยี่ขัน:5,BL06:สิรินธร:6,BL07:บางพลัด:7,BL08:บางอ้อ:8,BL09:บางโพ:9,BL10:เตาปูน:10,BL11:บางซื่อ:11,BL12:กำแพงเพชร:12,BL13:สวนจตุจักร:13,BL14:พหลโยธิน:14,BL15:ลาดพร้าว:15,BL16:รัชดาภิเษก:16,BL17:สุทธิสาร:17,BL18:ห้วยขวาง:18,BL19:ศูนย์วัฒนธรรมฯ:19,BL20:พระราม 9:20,BL21:เพชรบุรี:21,BL22:สุขุมวิท:22,BL23:ศูนย์สิริกิติ์:23,BL24:คลองเตย:24,BL25:ลุมพินี:25,BL26:สีลม:26,BL27:สามย่าน:27,BL28:หัวลำโพง:28,BL29:วัดมังกร:29,BL30:สามยอด:30,BL31:สนามไชย:31,BL32:อิสรภาพ:32',
+  blueExt: 'BL01:ท่าพระ:1,BL34:บางไผ่:2,BL35:บางหว้า:3,BL36:เพชรเกษม 48:4,BL37:ภาษีเจริญ:5,BL38:บางแค:6,BL39:หลักสอง:7',
+  purple: 'PP01:คลองบางไผ่:1,PP02:ตลาดบางใหญ่:2,PP03:สามแยกบางใหญ่:3,PP04:บางพลู:4,PP05:บางรักใหญ่:5,PP06:บางรักน้อยท่าอิฐ:6,PP07:ไทรม่า:7,PP08:สะพานพระนั่งเกล้า:8,PP09:แยกนนทบุรี 1:9,PP10:บางกระสอ:10,PP11:ศูนย์ราชการนนทบุรี:11,PP12:กระทรวงสาธารณสุข:12,PP13:แยกติวานนท์:13,PP14:วงศ์สว่าง:14,PP15:บางซ่อน:15,PP16:เตาปูน:16',
+  arl: 'A8:พญาไท:1,A7:ราชปรารภ:2,A6:มักกะสัน:3,A5:รามคำแหง:4,A4:หัวหมาก:5,A3:บ้านทับช้าง:6,A2:ลาดกระบัง:7,A1:สุวรรณภูมิ:8',
+  redN: 'RN01:สถานีกลางบางซื่อ:1,RN02:จตุจักร:2,RN03:วัดเสมียนนารี:3,RN04:บางเขน:4,RN05:ทุ่งสองห้อง:5,RN06:หลักสี่:6,RN07:การเคหะ:7,RN08:ดอนเมือง:8,RN09:หลักหก:9,RN10:รังสิต:10',
+  redW: 'RN01:สถานีกลางบางซื่อ:0,RW02:บางซ่อน:1,RW03:บางบำหรุ:2,RW04:ตลิ่งชัน:3',
+  gold: 'G1:กรุงธนบุรี:1,G2:เจริญนคร:2,G3:คลองสาน:3',
+  yellow: 'YL01:ลาดพร้าว:1,YL02:ภาวนา:2,YL03:โชคชัย 4:3,YL04:ลาดพร้าว 71:4,YL05:ลาดพร้าว 83:5,YL06:มหาดไทย:6,YL07:ลาดพร้าว 101:7,YL08:บางกะปิ:8,YL09:แยกลำสาลี:9,YL10:ศรีกรีฑา:10,YL11:หัวหมาก:11,YL12:กลันตัน:12,YL13:ศรีนุช:13,YL14:ศรีนครินทร์ 38:14,YL15:สวนหลวง ร.9:15,YL16:ศรีอุดม:16,YL17:ศรีเอี่ยม:17,YL18:ศรีลาซาล:18,YL19:ศรีแบริ่ง:19,YL20:ศรีด่าน:20,YL21:ศรีเทพา:21,YL22:ทิพวัล:22,YL23:สำโรง:23',
+  pink: 'PK01:ศูนย์ราชการนนทบุรี:1,PK02:แคราย:2,PK03:สนามบินน้ำ:3,PK06:แยกปากเกร็ด:6,PK10:เมืองทองธานี:10,PK12:ศูนย์ราชการเฉลิมพระเกียรติ:12,PK14:หลักสี่:14,PK16:วัดพระศรีมหาธาตุ:16,PK23:คู้บอน:23,PK30:มีนบุรี:30'
+};
+
+/* ทางเดินเชื่อมระหว่างสถานีต่างผู้ให้บริการ (นาที) */
+const WALKS = [
+  ['E4','BL22',6],['S2','BL26',6],['N8','BL13',6],['N2','A8',5],['BL21','A6',6],
+  ['BL10','PP16',3],['BL11','RN01',8],['S12','BL35',3],['BL15','YL01',4],['E15','YL23',4],
+  ['A4','YL11',5],['PK14','RN06',5],['PK16','N17',4],['S7','G1',4],['PK01','PP11',5],['PP15','RW02',4]
+];
+
+/* จุดหมายยอดนิยม: ชื่อ, สถานีใกล้เคียง [รหัส, กม.], มีสองแถว/รถรับส่งช่วงสุดท้ายหรือไม่ */
+const LANDMARKS = [
+  ['ตลาดนัดจตุจักร', [['BL13',0.2],['N8',0.5]], false],
+  ['สยามพารากอน', [['CEN',0.1]], false],
+  ['สยามสแควร์', [['CEN',0.2]], false],
+  ['เซ็นทรัลเวิลด์', [['CEN',0.7],['E1',0.6]], false],
+  ['เอ็มบีเค เซ็นเตอร์', [['W1',0.2]], false],
+  ['จุฬาลงกรณ์มหาวิทยาลัย', [['BL27',0.5],['W1',0.9]], false],
+  ['โรงพยาบาลจุฬาลงกรณ์', [['S2',0.7],['BL26',0.8]], false],
+  ['เซ็นทรัลลาดพร้าว', [['N9',0.1],['BL14',0.3]], false],
+  ['เซ็นทรัลพระราม 9', [['BL20',0.3]], false],
+  ['ไอคอนสยาม', [['G3',0.2],['G2',0.7]], false],
+  ['เยาวราช', [['BL30',0.2]], false],
+  ['ถนนข้าวสาร', [['BL31',2.2]], false],
+  ['ท่าอากาศยานสุวรรณภูมิ', [['A1',0.1]], false],
+  ['ท่าอากาศยานดอนเมือง', [['RN08',0.3]], false],
+  ['เอ็มควอเทียร์ / เอ็มโพเรียม', [['E5',0.1]], false],
+  ['สวนลุมพินี', [['BL25',0.1],['S2',0.8]], false],
+  ['ท่าเรือสาทร', [['S6',0.2]], false],
+  ['มหาวิทยาลัยเกษตรศาสตร์ บางเขน', [['N13',0.5]], false],
+  ['เมืองทองธานี', [['PK10',0.4]], true],
+  ['ปากเกร็ด', [['PK06',0.3]], true],
+  ['ศูนย์ราชการแจ้งวัฒนะ', [['PK12',0.3]], false],
+  ['เซ็นทรัลเวสต์เกต บางใหญ่', [['PP03',0.9]], true],
+  ['เมกาบางนา', [['E13',3.2]], true],
+  ['ปากน้ำ สมุทรปราการ', [['E19',0.2]], true],
+  ['ฟิวเจอร์พาร์ค รังสิต', [['RN10',1.8]], true],
+  ['มหาวิทยาลัยธรรมศาสตร์ รังสิต', [['RN10',4.5]], true]
+];
+
+/* ---------- สร้างกราฟ ---------- */
+const adj = {}, nodeLines = {}, names = {};
+function parseSeq(s){ return s.split(',').map(x => { const p = x.trim().split(':'); return {c:p[0], n:p[1], i:+p[2]}; }); }
+function addNode(c, n, l){ names[c] = n; (nodeLines[c] = nodeLines[c] || new Set()).add(l); }
+function link(a, b, e){
+  (adj[a] = adj[a] || []).push(Object.assign({to:b, from:a}, e));
+  (adj[b] = adj[b] || []).push(Object.assign({to:a, from:b}, e));
+}
+function addLine(line, seq){
+  const a = parseSeq(seq);
+  a.forEach(s => addNode(s.c, s.n, line));
+  for(let i = 1; i < a.length; i++){
+    const n = Math.abs(a[i].i - a[i-1].i);
+    link(a[i-1].c, a[i].c, {type:'ride', line, n, min:n * LINES[line].hop});
+  }
+}
+addLine('bts', SEQ.bts); addLine('sil', SEQ.sil);
+addLine('blue', SEQ.blueMain); addLine('blue', SEQ.blueExt);
+link('BL32', 'BL01', {type:'ride', line:'blue', n:1, min:LINES.blue.hop});
+addLine('purple', SEQ.purple); addLine('arl', SEQ.arl);
+addLine('red', SEQ.redN); addLine('red', SEQ.redW);
+addLine('gold', SEQ.gold); addLine('yellow', SEQ.yellow); addLine('pink', SEQ.pink);
+WALKS.forEach(w => link(w[0], w[1], {type:'walk', min:w[2]}));
+
+/* ---------- ค่าโดยสาร ---------- */
+const BLUE_FARE = [17,20,22,25,27,29,32,34,37,39,42,44]; /* อัตราใหม่ 3 ก.ค. 2569 */
+function fareOp(op, n){
+  n = Math.max(1, n);
+  switch(op){
+    case 'bts':    return n <= 10 ? Math.min(45, 17 + 3 * (n - 1)) : Math.min(65, 45 + 2 * (n - 10));
+    case 'blue':   return BLUE_FARE[Math.min(n, 12) - 1];
+    case 'purple': return Math.min(42, 14 + 2 * (n - 1));
+    case 'arl':    return Math.min(45, 15 + 5 * (n - 1));
+    case 'red':    return Math.min(42, Math.round(12 + 3.3 * (n - 1)));
+    case 'gold':   return 16;
+    case 'yellow': return Math.min(45, Math.round(15 + 1.4 * (n - 1)));
+    case 'pink':   return Math.min(45, Math.round(15 + 1.05 * (n - 1)));
+  }
+  return 0;
+}
+const FARE_EXACT = {blue:true};
+function fareWin(d){ if(d <= 2) return 25; if(d <= 5) return Math.round(25 + 5 * (d - 2)); return Math.round(10 * d); }
+function winRange(d){ const f = fareWin(d); return [f, Math.round(f * 1.25 / 5) * 5]; }
+function busRange(d){ return [8, d <= 8 ? 15 : d <= 16 ? 20 : 25]; }
+
+/* ---------- หาเส้นทางรถไฟฟ้า (เวลาสั้นที่สุด) ---------- */
+function route(src, dst){
+  const dist = new Map(), prev = new Map();
+  let pq = [];
+  const key = (n, l) => n + '|' + l;
+  nodeLines[src].forEach(l => {
+    const k = key(src, l), w = LINES[l].wait;
+    dist.set(k, w); prev.set(k, null); pq.push([w, src, l]);
+  });
+  let goal = null;
+  while(pq.length){
+    pq.sort((a, b) => a[0] - b[0]);
+    const [d0, n, l] = pq.shift(), k = key(n, l);
+    if(d0 > dist.get(k)) continue;
+    if(n === dst){ goal = k; break; }
+    const relax = (nn, ll, cost, edge) => {
+      const nk = key(nn, ll), nd = d0 + cost;
+      if(!dist.has(nk) || nd < dist.get(nk)){ dist.set(nk, nd); prev.set(nk, {k, edge}); pq.push([nd, nn, ll]); }
+    };
+    nodeLines[n].forEach(l2 => { if(l2 !== l) relax(n, l2, 4, {type:'switch', node:n, fromLine:l, toLine:l2, min:4}); });
+    (adj[n] || []).forEach(e => {
+      if(e.type === 'ride' && e.line === l) relax(e.to, l, e.min, {type:'ride', line:l, from:n, to:e.to, n:e.n, min:e.min});
+      else if(e.type === 'walk') nodeLines[e.to].forEach(l2 => {
+        const c = e.min + LINES[l2].wait;
+        relax(e.to, l2, c, {type:'walk', from:n, to:e.to, toLine:l2, min:c});
+      });
+    });
+  }
+  if(!goal) return null;
+  const edges = [];
+  let cur = goal;
+  while(prev.get(cur)){ const p = prev.get(cur); edges.unshift(p.edge); cur = p.k; }
+  let km = 0;
+  edges.forEach(e => { if(e.type === 'ride') km += e.n * LINES[e.line].km; });
+  return {edges, min:dist.get(goal), km};
+}
+
+/* แปลงผลลัพธ์เป็นช่วงการเดินทางและคิดค่าโดยสารเป็นกลุ่มตามผู้ให้บริการ */
+function railLegs(r, cap20){
+  const legs = [], groups = [];
+  let cur = null, g = null, first = true;
+  r.edges.forEach(e => {
+    if(e.type === 'ride'){
+      const L = LINES[e.line];
+      if(cur && cur.line === e.line){ cur.to = e.to; cur.n += e.n; cur.min += e.min; }
+      else {
+        cur = {kind:'rail', line:e.line, from:e.from, to:e.to, n:e.n, min:e.min + (first ? L.wait : 0), lo:0, hi:0};
+        first = false; legs.push(cur);
+      }
+      if(!g || g.op !== L.op || g.broken){ g = {op:L.op, n:0, broken:false, last:null}; groups.push(g); }
+      g.n += e.n; g.last = cur;
+    } else if(e.type === 'switch'){
+      cur = null;
+      legs.push({kind:'switch', node:e.node, from:e.fromLine, to:e.toLine, min:e.min, lo:0, hi:0});
+      if(g && LINES[e.toLine].op !== LINES[e.fromLine].op) g.broken = true;
+    } else {
+      cur = null;
+      legs.push({kind:'walkx', from:e.from, to:e.to, toLine:e.toLine, min:e.min, lo:0, hi:0});
+      if(g) g.broken = true;
+    }
+  });
+  let total = 0, est = false;
+  groups.forEach(gr => {
+    const f = fareOp(gr.op, gr.n);
+    gr.last.lo = gr.last.hi = f; gr.last.est = !FARE_EXACT[gr.op];
+    if(gr.last.est) est = true;
+    total += f;
+  });
+  let capped = false;
+  if(cap20 && total > 20){
+    capped = true; total = 20;
+    let placed = false;
+    legs.forEach(l => { if(l.kind === 'rail'){ l.lo = l.hi = placed ? 0 : 20; l.est = false; l.capped = true; placed = true; } });
+    est = false;
+  } else if(cap20){
+    capped = true;
+  }
+  return {legs, total, est, capped};
+}
+
+/* ---------- ตัวเลือกช่วงต้น/ปลายทาง ---------- */
+function accessModes(place, km, pk, allow){
+  const out = [];
+  if(km <= 1.2) out.push({kind:'walk', min:Math.max(1, Math.round(km * 13)), lo:0, hi:0, km});
+  if(km > 0.3){ const w = winRange(km); out.push({kind:'win', min:Math.round(3 + km * 2.6 * pk), lo:w[0], hi:w[1], km}); }
+  if(place.st && km >= 1.2) out.push({kind:'song', min:Math.round(8 + km * 4.2 * pk), lo:10, hi:20, km});
+  return out.filter(m => allow[m.kind] || (m.kind === 'walk' && km <= 0.3));
+}
+
+/* allow = {rail, win, bus, song, walk} */
+function planTrip(O, D, opts){
+  const allow = opts.allow, pk = opts.peak ? 1.5 : 1;
+  const cand = [], seen = new Set();
+  let bestKm = null;
+  O.acc.forEach(oa => D.acc.forEach(da => {
+    if(oa.s === da.s) return;
+    const r = route(oa.s, da.s);
+    if(!r) return;
+    const dk = r.km * 0.85 + oa.km + da.km;
+    if(bestKm === null || dk < bestKm) bestKm = dk;
+    if(!allow.rail) return;
+    const aM = accessModes(O, oa.km, pk, allow), eM = accessModes(D, da.km, pk, allow);
+    if(!aM.length || !eM.length) return;
+    const rl = railLegs(r, opts.cap20);
+    const lines = rl.legs.filter(l => l.kind === 'rail').map(l => l.line).join('>');
+    const fast = ms => ms.reduce((a, b) => b.min < a.min ? b : a);
+    const cheap = ms => ms.reduce((a, b) => (b.lo + b.hi) < (a.lo + a.hi) ? b : a);
+    [[fast(aM), fast(eM)], [cheap(aM), cheap(eM)], [fast(aM), cheap(eM)], [cheap(aM), fast(eM)]].forEach(pair => {
+      const a = pair[0], e = pair[1];
+      const sig = [oa.s, da.s, lines, a.kind, e.kind].join('|');
+      if(seen.has(sig)) return;
+      seen.add(sig);
+      const legs = [];
+      if(oa.km > 0.12) legs.push(Object.assign({title:(a.kind === 'walk' ? 'เดินไปสถานี' : a.kind === 'win' ? 'วินมอเตอร์ไซค์ไปสถานี' : 'สองแถวไปสถานี') + names[oa.s], sub:'ประมาณ ' + a.km.toFixed(1) + ' กม.'}, a));
+      rl.legs.forEach(l => legs.push(Object.assign({}, l)));
+      if(da.km > 0.12) legs.push(Object.assign({title:(e.kind === 'walk' ? 'เดินจากสถานี' : e.kind === 'win' ? 'วินจากสถานี' : 'สองแถวจากสถานี') + names[da.s] + ' ไป' + D.name, sub:'ประมาณ ' + e.km.toFixed(1) + ' กม.'}, e));
+      cand.push({kind:'rail', sig, legs, est:rl.est, capped:rl.capped});
+    });
+  }));
+  const d = bestKm !== null ? bestKm : Math.max(...O.acc.map(a => a.km)) + Math.max(...D.acc.map(a => a.km));
+  const direct = [];
+  if(allow.walk && d <= 2){
+    direct.push({kind:'walk', sig:'walk', legs:[{kind:'walk', title:'เดินไป' + D.name, sub:'ประมาณ ' + d.toFixed(1) + ' กม.', min:Math.max(1, Math.round(d * 13)), lo:0, hi:0, km:d}]});
+  }
+  if(allow.win && d <= 15){
+    const w = winRange(d);
+    direct.push({kind:'win', sig:'win', est:true, legs:[{kind:'win', title:'วินมอเตอร์ไซค์ถึงปลายทาง', sub:'ประมาณ ' + d.toFixed(1) + ' กม. ไม่ผ่านรถไฟฟ้า', min:Math.round(3 + d * 2.6 * pk), lo:w[0], hi:w[1], km:d}]});
+  }
+  if(allow.bus && d >= 2){
+    const b = busRange(d);
+    direct.push({kind:'bus', sig:'bus', est:true, legs:[{kind:'bus', title:'รถเมล์ (ไม่ระบุเลขสาย)', sub:'ประมาณ ' + d.toFixed(1) + ' กม. ธรรมดา 8–10 บาท ปรับอากาศ 12–25 บาท', min:Math.round(12 * (pk > 1 ? 1.3 : 1) + d * 3.8 * pk), lo:b[0], hi:b[1], km:d}]});
+  }
+  if(allow.song && (O.st || D.st) && d >= 2 && d <= 25){
+    direct.push({kind:'song', sig:'song', est:true, legs:[{kind:'song', title:'สองแถว/รถรับส่งช่วงสั้นถึงปลายทาง', sub:'ประมาณ ' + d.toFixed(1) + ' กม. อาจต้องต่อรถเอง', min:Math.round(8 + d * 4.2 * pk), lo:10, hi:d > 12 ? 30 : 20, km:d}]});
+  }
+  const all = cand.concat(direct).map(o => {
+    o.min = Math.round(o.legs.reduce((s, l) => s + l.min, 0));
+    o.lo = o.legs.reduce((s, l) => s + l.lo, 0);
+    o.hi = o.legs.reduce((s, l) => s + l.hi, 0);
+    o.transfers = o.legs.filter(l => l.kind === 'switch' || l.kind === 'walkx').length;
+    o.walkMin = o.legs.filter(l => l.kind === 'walk' || l.kind === 'walkx').reduce((s, l) => s + l.min, 0);
+    o.roadMin = o.legs.filter(l => l.kind === 'win' || l.kind === 'song' || l.kind === 'bus').reduce((s, l) => s + l.min, 0);
+    return o;
+  });
+  return {options:all, distKm:d};
+}
+
+if(typeof module !== 'undefined') module.exports = {LINES, names, nodeLines, LANDMARKS, planTrip, route, fareOp};
+/* ---------- PAI DEE: ส่วนแสดงผล ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LET = 'ABCDEFGH';
+const MODE_DEF = [['rail', 'รถไฟฟ้า'], ['win', 'วินมอเตอร์ไซค์'], ['bus', 'รถเมล์'], ['song', 'สองแถว'], ['walk', 'เดิน']];
+const PRI_HINT = {cost:'เลือกตัวเลือกที่จ่ายน้อยที่สุดในแต่ละช่วง', time:'เลือกตัวเลือกที่ถึงเร็วที่สุดในแต่ละช่วง', comfy:'หลีกเลี่ยงการต่อรถหลายครั้ง เดินไกล และรถติดบนถนน'};
+const STAYS = [0, 15, 30, 45, 60, 90, 120, 180];
+const MAX_STOPS = 6;
+
+const state = {
+  stops:[null, null, null], stay:[0, 60, 0],
+  modes:{rail:true, win:true, bus:true, song:true, walk:true},
+  pri:'time', budget:'200', start:'09:00', round:false, peak:false, cap20:false, over:{}
+};
+
+/* รายการสถานที่ */
+const PLACES = (function(){
+  const map = new Map();
+  Object.keys(names).forEach(c => {
+    const n = names[c];
+    let p = map.get(n);
+    if(!p){ p = {name:n, acc:[], lines:new Set(), kind:'station', st:false}; map.set(n, p); }
+    p.acc.push({s:c, km:0.1});
+    nodeLines[c].forEach(l => p.lines.add(l));
+  });
+  const lm = LANDMARKS.map(x => {
+    const lines = new Set();
+    x[1].forEach(a => nodeLines[a[0]].forEach(l => lines.add(l)));
+    return {name:x[0], acc:x[1].map(a => ({s:a[0], km:a[1]})), lines, kind:'landmark', st:x[2]};
+  });
+  return lm.concat(Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'th')));
+})();
+const byName = n => PLACES.find(p => p.name === n) || null;
+
+const ICONS = {
+  walk:'<circle cx="13" cy="4.5" r="1.8"/><path d="M12 8l-2.5 3.5 2.5 2v5.5M12 8l2.5 3 3 1M9.5 11.5L7 15"/>',
+  win:'<circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/><path d="M6 16l3-6h4l3 6M13 10l2-3h2"/>',
+  bus:'<rect x="4" y="4" width="16" height="13" rx="2"/><path d="M4 11h16M8 17v2M16 17v2"/>',
+  rail:'<rect x="6" y="3" width="12" height="14" rx="3"/><path d="M6 11h12M9 20l-2 2M15 20l2 2"/>',
+  song:'<path d="M3 15V9h8l2 3h6v3"/><circle cx="7" cy="17" r="2"/><circle cx="16" cy="17" r="2"/>'
+};
+const icon = k => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[k] || ICONS.walk) + '</svg>';
+const fmtMin = m => m < 60 ? m + ' นาที' : Math.floor(m / 60) + ' ชม.' + (m % 60 ? ' ' + (m % 60) + ' นาที' : '');
+const fmtFare = (lo, hi, est) => (lo === 0 && hi === 0) ? 'ฟรี' : (lo === hi ? (est ? '≈' : '') + lo + ' ฿' : lo + '–' + hi + ' ฿');
+const dots = p => '<span class="dots">' + Array.from(p.lines).map(l => '<i style="background:' + LINES[l].bg + '"></i>').join('') + '</span>';
+const hhmm = t => { const m = ((Math.round(t) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const toMin = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) : 540; };
+
+/* ---------- เก็บร่างในเบราว์เซอร์ ---------- */
+function saveDraft(){
+  try{
+    localStorage.setItem('paidee.draft', JSON.stringify({
+      stops:state.stops.map(p => p ? p.name : null), stay:state.stay, modes:state.modes, pri:state.pri,
+      budget:state.budget, start:state.start, round:state.round, peak:state.peak, cap20:state.cap20,
+      title:$('#ptitle').value, author:$('#pauthor').value
+    }));
+  }catch(e){}
+}
+function applyData(d, withMeta){
+  if(!d) return;
+  if(Array.isArray(d.stops) && d.stops.length >= 2){
+    state.stops = d.stops.slice(0, MAX_STOPS).map(n => n ? byName(n) : null);
+    state.stay = state.stops.map((_, i) => (d.stay && STAYS.includes(+d.stay[i])) ? +d.stay[i] : (i && i < state.stops.length - 1 ? 30 : 0));
+  }
+  if(d.modes){ MODE_DEF.forEach(m => { if(typeof d.modes[m[0]] === 'boolean') state.modes[m[0]] = d.modes[m[0]]; }); if(!MODE_DEF.some(m => state.modes[m[0]])) state.modes.rail = true; }
+  if(['cost', 'time', 'comfy'].includes(d.pri)) state.pri = d.pri;
+  if(d.budget !== undefined) state.budget = d.budget === null ? '' : String(d.budget);
+  if(typeof d.start === 'string') state.start = d.start;
+  state.round = !!d.round; state.peak = !!d.peak; state.cap20 = !!d.cap20;
+  state.over = {};
+  if(withMeta){ if(d.title) $('#ptitle').value = d.title; }
+  else { if(d.title) $('#ptitle').value = d.title; if(d.author) $('#pauthor').value = d.author; }
+}
+
+/* ---------- แผงตั้งค่า ---------- */
+function renderModes(){
+  $('#modes').innerHTML = MODE_DEF.map(m => '<button type="button" data-mode="' + m[0] + '" aria-pressed="' + state.modes[m[0]] + '">' + icon(m[0]) + m[1] + '</button>').join('');
+}
+function syncControls(){
+  renderModes();
+  document.querySelectorAll('#pri button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pri === state.pri));
+  $('#priHint').textContent = PRI_HINT[state.pri];
+  $('#budget').value = state.budget; $('#start').value = state.start;
+  $('#round').checked = state.round; $('#peak').checked = state.peak; $('#cap20').checked = state.cap20;
+}
+function renderStops(){
+  const n = state.stops.length;
+  $('#stops').innerHTML = state.stops.map((p, i) => {
+    const showStay = i >= 1 && (i < n - 1 || state.round);
+    const cls = i === 0 ? 'start' : (i === n - 1 && !state.round ? 'end' : '');
+    return '<li class="stop" data-i="' + i + '"><span class="badge ' + cls + '">' + LET[i] + '</span>'
+      + '<div class="sfield"><input type="text" class="sin" data-i="' + i + '" value="' + esc(p ? p.name : '') + '" placeholder="' + (i === 0 ? 'ต้นทาง เช่น สถานีหรือสถานที่' : 'จุดหมายหรือจุดแวะ') + '" autocomplete="off" role="combobox" aria-expanded="false" aria-label="' + (i === 0 ? 'ต้นทาง' : 'จุดที่ ' + LET[i]) + '"><ul class="suggest" hidden></ul></div>'
+      + '<div class="sctl">'
+      + (showStay ? '<label class="stay">อยู่ที่นี่ <select data-stay="' + i + '" aria-label="เวลาอยู่ที่จุด ' + LET[i] + '">' + STAYS.map(s => '<option value="' + s + '"' + (state.stay[i] === s ? ' selected' : '') + '>' + (s ? (s >= 60 ? (s / 60) + ' ชม.' : s + ' นาที') : 'ไม่แวะ') + '</option>').join('') + '</select></label>' : '')
+      + '<button type="button" data-up="' + i + '" aria-label="เลื่อนขึ้น"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+      + '<button type="button" data-down="' + i + '" aria-label="เลื่อนลง"' + (i === n - 1 ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" data-del="' + i + '" aria-label="ลบจุดนี้"' + (n <= 2 ? ' disabled' : '') + '>×</button></div></li>';
+  }).join('');
+  $('#addStop').disabled = n >= MAX_STOPS;
+}
+
+/* ช่องค้นหาหลายจุด */
+let combo = {inp:null, ul:null, cur:[], idx:-1};
+function comboShow(inp){
+  const ul = inp.parentNode.querySelector('.suggest');
+  combo.inp = inp; combo.ul = ul;
+  const q = inp.value.trim().toLowerCase(), i = +inp.dataset.i;
+  const exact = state.stops[i] && state.stops[i].name.toLowerCase() === q;
+  combo.cur = (!q || exact ? PLACES.slice(0, 14) : PLACES.filter(p => p.name.toLowerCase().includes(q))).slice(0, 10);
+  ul.innerHTML = combo.cur.length
+    ? combo.cur.map((p, k) => '<li role="option" data-k="' + k + '"><span>' + esc(p.name) + '</span><span class="sub">' + (p.kind === 'landmark' ? 'สถานที่' : 'สถานี') + dots(p) + '</span></li>').join('')
+    : '<li><span class="sub">ไม่พบชื่อนี้ ลองพิมพ์ชื่อสถานีใกล้ที่หมาย</span></li>';
+  ul.hidden = false; inp.setAttribute('aria-expanded', 'true'); combo.idx = -1;
+}
+function comboClose(){ if(combo.ul){ combo.ul.hidden = true; } if(combo.inp) combo.inp.setAttribute('aria-expanded', 'false'); combo.idx = -1; }
+function comboChoose(p){
+  const inp = combo.inp; if(!inp) return;
+  state.stops[+inp.dataset.i] = p; state.over = {}; inp.value = p.name; comboClose(); update();
+}
+$('#stops').addEventListener('focusin', e => { if(e.target.classList.contains('sin')){ e.target.select(); comboShow(e.target); } });
+$('#stops').addEventListener('input', e => { if(e.target.classList.contains('sin')) comboShow(e.target); });
+$('#stops').addEventListener('keydown', e => {
+  if(!e.target.classList.contains('sin')) return;
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault(); if(combo.ul.hidden) comboShow(e.target);
+    if(!combo.cur.length) return;
+    combo.idx = (combo.idx + (e.key === 'ArrowDown' ? 1 : -1) + combo.cur.length) % combo.cur.length;
+    Array.from(combo.ul.children).forEach((li, k) => li.classList.toggle('on', k === combo.idx));
+  } else if(e.key === 'Enter'){
+    e.preventDefault(); const p = combo.cur[combo.idx >= 0 ? combo.idx : 0]; if(p) comboChoose(p);
+  } else if(e.key === 'Escape'){ comboClose(); }
+});
+$('#stops').addEventListener('pointerdown', e => {
+  const li = e.target.closest('li[data-k]');
+  if(li){ e.preventDefault(); comboChoose(combo.cur[+li.dataset.k]); }
+});
+$('#stops').addEventListener('focusout', e => {
+  if(!e.target.classList.contains('sin')) return;
+  const inp = e.target;
+  setTimeout(() => {
+    if(combo.inp === inp) comboClose();
+    const i = +inp.dataset.i, hit = byName(inp.value.trim());
+    if(hit && hit !== state.stops[i]){ state.stops[i] = hit; state.over = {}; update(); }
+    else if(!hit) inp.value = state.stops[i] ? state.stops[i].name : '';
+  }, 130);
+});
+$('#stops').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  const mv = (i, j) => { [state.stops[i], state.stops[j]] = [state.stops[j], state.stops[i]]; [state.stay[i], state.stay[j]] = [state.stay[j], state.stay[i]]; };
+  if(b.dataset.up !== undefined){ const i = +b.dataset.up; mv(i, i - 1); }
+  else if(b.dataset.down !== undefined){ const i = +b.dataset.down; mv(i, i + 1); }
+  else if(b.dataset.del !== undefined){ const i = +b.dataset.del; state.stops.splice(i, 1); state.stay.splice(i, 1); }
+  else return;
+  state.over = {}; renderStops(); update();
+});
+$('#stops').addEventListener('change', e => {
+  if(e.target.dataset.stay !== undefined){ state.stay[+e.target.dataset.stay] = +e.target.value; update(); }
+});
+$('#addStop').addEventListener('click', () => {
+  if(state.stops.length >= MAX_STOPS) return;
+  const last = state.stops.length - 1;
+  state.stops.push(null); state.stay.push(0);
+  if(state.stay[last] === 0 && last > 0) state.stay[last] = 30;
+  renderStops(); update();
+  const inp = document.querySelector('.sin[data-i="' + (state.stops.length - 1) + '"]'); if(inp) inp.focus();
+});
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('button[data-mode]'); if(!b) return;
+  const k = b.dataset.mode, on = state.modes[k];
+  if(on && MODE_DEF.filter(m => state.modes[m[0]]).length === 1) return;
+  state.modes[k] = !on; state.over = {}; renderModes(); update();
+});
+$('#pri').addEventListener('click', e => {
+  const b = e.target.closest('button[data-pri]'); if(!b) return;
+  state.pri = b.dataset.pri; state.over = {}; syncControls(); update();
+});
+$('#budget').addEventListener('input', e => { state.budget = e.target.value; update(); });
+$('#start').addEventListener('input', e => { state.start = e.target.value || '09:00'; update(); });
+$('#round').addEventListener('change', e => { state.round = e.target.checked; state.over = {}; renderStops(); update(); });
+$('#peak').addEventListener('change', e => { state.peak = e.target.checked; state.over = {}; update(); });
+$('#cap20').addEventListener('change', e => { state.cap20 = e.target.checked; state.over = {}; update(); });
+$('#ptitle').addEventListener('input', () => { saveDraft(); refreshShare(); });
+$('#pauthor').addEventListener('input', saveDraft);
+
+/* ---------- คำนวณแผน ---------- */
+const cache = new Map();
+function legOptions(a, b){
+  const k = [a.name, b.name, state.peak, state.cap20, MODE_DEF.map(m => state.modes[m[0]] ? 1 : 0).join('')].join('|');
+  if(!cache.has(k)) cache.set(k, planTrip(a, b, {peak:state.peak, cap20:state.cap20, allow:state.modes}));
+  return cache.get(k);
+}
+const costOf = o => (o.lo + o.hi) / 2;
+function scoreOf(o){
+  if(state.pri === 'cost') return costOf(o) + o.min * 0.03;
+  if(state.pri === 'time') return o.min + o.transfers * 0.1 + costOf(o) * 0.001;
+  return o.transfers * 12 + o.walkMin * 0.8 + o.roadMin * 0.5 + (o.kind === 'bus' ? 10 : 0) + o.min * 0.3 + costOf(o) * 0.01;
+}
+function buildPlan(){
+  if(state.stops.some(p => !p)) return {incomplete:true};
+  const seq = state.stops.slice();
+  if(state.round) seq.push(state.stops[0]);
+  const legs = [];
+  for(let i = 0; i < seq.length - 1; i++){
+    const L = {i, a:seq[i], b:seq[i + 1]};
+    if(L.a === L.b){ L.same = true; legs.push(L); continue; }
+    L.res = legOptions(L.a, L.b); L.opts = L.res.options;
+    if(!L.opts.length){ L.none = true; legs.push(L); continue; }
+    const ov = state.over[i + '|' + L.a.name + '>' + L.b.name];
+    const found = ov ? L.opts.find(o => o.sig === ov) : null;
+    L.manual = !!found;
+    L.pick = found || L.opts.reduce((x, y) => scoreOf(y) < scoreOf(x) ? y : x);
+    legs.push(L);
+  }
+  const bud = parseFloat(state.budget) || 0;
+  const total = () => legs.reduce((s, L) => s + (L.pick ? costOf(L.pick) : 0), 0);
+  let fitted = false;
+  if(bud > 0){
+    for(let g = 0; g < 40 && total() > bud; g++){
+      let best = null;
+      legs.forEach(L => {
+        if(!L.pick || L.manual) return;
+        L.opts.forEach(o => {
+          const sv = costOf(L.pick) - costOf(o);
+          if(sv > 0.5){ const r = sv / (Math.max(0, o.min - L.pick.min) + 5); if(!best || r > best.r) best = {L, o, r}; }
+        });
+      });
+      if(!best) break;
+      best.L.pick = best.o; best.L.fitted = true; fitted = true;
+    }
+  }
+  const ok = legs.filter(L => L.pick);
+  const sum = {
+    min:ok.reduce((s, L) => s + L.pick.min, 0), lo:ok.reduce((s, L) => s + L.pick.lo, 0),
+    hi:ok.reduce((s, L) => s + L.pick.hi, 0), mid:total(), bud, fitted,
+    missing:legs.filter(L => L.none).length
+  };
+  const t0 = toMin(state.start); let t = t0;
+  legs.forEach(L => {
+    L.depart = t; if(L.pick) t += L.pick.min; L.arrive = t;
+    const stay = (L.i + 1 < state.stops.length || state.round) ? (state.stay[L.i + 1] || 0) : 0;
+    L.stayAfter = (L.i + 1 < legs.length) ? stay : 0;
+    if(L.i + 1 < legs.length) t += stay;
+  });
+  sum.end = legs.length ? legs[legs.length - 1].arrive : t0; sum.stay = legs.reduce((s, L) => s + L.stayAfter, 0);
+  return {legs, sum};
+}
+
+/* ---------- แสดงผล ---------- */
+function optLabel(o){
+  const out = [];
+  o.legs.forEach(l => {
+    let t = null;
+    if(l.kind === 'rail') t = LINES[l.line].name.replace('MRT สาย', '').replace('BTS สาย', 'BTS ').replace('รถไฟสายสีแดง', 'สายสีแดง');
+    else t = {win:'วิน', song:'สองแถว', bus:'รถเมล์', walk:'เดิน'}[l.kind];
+    if(t && out[out.length - 1] !== t) out.push(t);
+  });
+  return out.join(' → ');
+}
+function legRow(l){
+  let c = 'var(--walk)', ic = '#fff', title = l.title, sub = l.sub || '', right = '';
+  if(l.kind === 'rail'){
+    const L = LINES[l.line]; c = L.bg; ic = L.fg;
+    title = L.name; sub = names[l.from] + ' → ' + names[l.to] + ' · ' + l.n + ' สถานี';
+    right = l.capped ? (l.lo ? '<b>20 ฿</b>ตลอดสาย' : '<b>รวมแล้ว</b>') : (l.lo ? '<b>' + fmtFare(l.lo, l.hi, l.est) + '</b>' : '<b>—</b>');
+  } else if(l.kind === 'switch'){ title = 'เปลี่ยนสายที่สถานี' + names[l.node]; sub = LINES[l.from].name + ' → ' + LINES[l.to].name; }
+  else if(l.kind === 'walkx'){ title = 'เดินต่อไปสถานี' + names[l.to]; sub = 'ต่อ' + LINES[l.toLine].name + ' (รวมเวลารอ)'; }
+  else if(l.kind === 'win' || l.kind === 'song' || l.kind === 'bus'){ c = 'var(--pink)'; ic = 'var(--on-pink)'; right = '<b>' + fmtFare(l.lo, l.hi, true) + '</b>'; }
+  else if(l.kind === 'walk'){ right = '<b>เดิน</b>'; }
+  const k = l.kind === 'switch' || l.kind === 'walkx' ? 'walk' : l.kind;
+  return '<li class="leg" style="--c:' + c + ';--ic:' + ic + '"><span class="ic">' + icon(k) + '</span><div><h4>' + esc(title) + '</h4><p>' + esc(sub) + '</p></div><div class="rt">' + right + fmtMin(Math.round(l.min)) + '</div></li>';
+}
+function chipsOf(o){
+  const seen = new Set(), chips = [];
+  o.legs.forEach(l => {
+    if(l.kind === 'rail' && !seen.has(l.line)){ seen.add(l.line); chips.push('<span class="chip" style="background:' + LINES[l.line].bg + ';color:' + LINES[l.line].fg + '">' + LINES[l.line].name + '</span>'); }
+    const lab = {win:'วิน', song:'สองแถว', bus:'รถเมล์', walk:'เดิน'}[l.kind];
+    if(lab && !seen.has(l.kind)){ seen.add(l.kind); chips.push('<span class="chip ' + (l.kind === 'walk' ? 'plain' : 'road') + '">' + lab + '</span>'); }
+  });
+  return chips.join('');
+}
+function legCard(L, plan){
+  const n = plan.legs.length, ai = L.i, bi = (L.i + 1 === state.stops.length) ? 0 : L.i + 1;
+  const head = '<div class="leg-h"><div><h3><span class="ab ' + (ai === 0 ? 's' : '') + '">' + LET[ai] + '</span>' + esc(L.a.name) + ' → <span class="ab ' + (bi === 0 ? 's' : (L.i === n - 1 ? 'e' : '')) + '">' + LET[bi] + '</span>' + esc(L.b.name) + '</h3>'
+    + '<div class="times">ออก ' + hhmm(L.depart) + (L.pick ? ' · ถึง ' + hhmm(L.arrive) : '') + '</div></div>';
+  if(L.same) return '<article class="card">' + head + '</div><p class="hint">จุดเริ่มต้นกับจุดหมายเป็นที่เดียวกัน ไม่ต้องเดินทาง</p></article>';
+  if(L.none) return '<article class="card">' + head + '</div><p class="note pink">ไม่มีตัวเลือกที่ตรงกับวิธีเดินทางที่เลือก ลองเปิดวิธีเดินทางเพิ่ม เช่น วินหรือเดิน</p></article>';
+  const o = L.pick;
+  const bar = o.legs.filter(l => l.min > 0).map(l => '<span class="' + l.kind + '" style="flex:' + l.min + (l.kind === 'rail' ? ';background:' + LINES[l.line].bg : '') + '"></span>').join('');
+  const trf = o.transfers ? 'ต่อรถ ' + o.transfers + ' ครั้ง' : 'ไม่ต้องต่อรถ';
+  const tags = (L.manual ? '<span class="tag">เลือกเอง</span> ' : '') + (L.fitted ? '<span class="tag">ปรับให้ตรงงบ</span>' : '');
+  const alts = L.opts.slice().sort((x, y) => scoreOf(x) - scoreOf(y)).slice(0, 6).map(x =>
+    '<button type="button" class="alt" data-leg="' + L.i + '" data-sig="' + esc(x.sig) + '" aria-pressed="' + (x === o) + '"><span>' + esc(optLabel(x)) + (x.transfers ? ' · ต่อ ' + x.transfers + ' ครั้ง' : '') + '</span><span>' + fmtMin(x.min) + ' · ' + fmtFare(x.lo, x.hi, x.est) + '</span></button>').join('');
+  return '<article class="card">' + head
+    + '<div class="lt"><b>' + fmtMin(o.min) + '</b><small>' + fmtFare(o.lo, o.hi, o.est) + ' · ' + trf + '</small></div></div>'
+    + (tags ? '<div>' + tags + '</div>' : '')
+    + '<div class="bar" role="img" aria-label="สัดส่วนเวลาแต่ละช่วง">' + bar + '</div>'
+    + '<div class="chips">' + chipsOf(o) + '</div>'
+    + '<details' + (L.i === 0 ? ' open' : '') + '><summary>ขั้นตอนการเดินทาง</summary><ol class="legs">' + o.legs.map(legRow).join('') + '</ol></details>'
+    + '<details><summary>ตัวเลือกอื่นของช่วงนี้</summary><div class="alts">' + alts + '</div>' + (L.manual ? '<p style="margin-top:8px"><button type="button" class="linkbtn" data-auto="' + L.i + '">ให้ระบบเลือกให้อีกครั้ง</button></p>' : '') + '</details>'
+    + (o.capped ? '<p class="hint">คำนวณค่ารถไฟฟ้าตามสิทธิ์ 20 บาทตลอดสาย</p>' : (o.est ? '<p class="hint">ค่าโดยสารส่วนใหญ่เป็นค่าประมาณ</p>' : '')) + '</article>';
+}
+let current = null;
+function renderPlan(){
+  const out = $('#plan');
+  const P = buildPlan(); current = P;
+  if(P.incomplete){
+    out.innerHTML = '<div class="empty"><h2>เลือกจุดหมายให้ครบทุกช่อง</h2><p class="hint">พิมพ์ชื่อสถานีหรือสถานที่ในช่องด้านซ้าย แล้วแผนจะแสดงที่นี่</p></div>';
+    return;
+  }
+  const S = P.sum;
+  const mid = Math.round(S.mid), over = S.bud > 0 && mid > S.bud;
+  const pct = S.bud > 0 ? Math.min(100, Math.round(mid / S.bud * 100)) : 0;
+  let html = '<section class="card sumcard" aria-label="สรุปแผน"><div class="sumtop">'
+    + '<div class="m"><small>เวลาเดินทางรวม</small><b>' + fmtMin(S.min).replace(' นาที', '<em>นาที</em>').replace(' ชม.', '<em>ชม.</em> ') + '</b><span>' + (S.stay ? 'แวะรวม ' + fmtMin(S.stay) : 'ไม่มีเวลาแวะ') + '</span></div>'
+    + '<div class="m"><small>ค่าใช้จ่ายโดยประมาณ</small><b>' + mid + '<em>฿</em></b><span>ช่วง ' + S.lo + '–' + S.hi + ' ฿</span></div>'
+    + '<div class="m"><small>ถึงปลายทาง</small><b>' + hhmm(S.end) + '</b><span>ออก ' + hhmm(toMin(state.start)) + '</span></div></div>';
+  if(S.bud > 0){
+    html += '<div><div class="meter' + (over ? ' over' : '') + '" role="img" aria-label="ใช้งบไป ' + pct + ' เปอร์เซ็นต์"><i style="width:' + pct + '%"></i></div>'
+      + '<div class="bline" style="margin-top:6px"><span>งบ ' + S.bud + ' ฿</span>' + (over ? '<span class="bad">เกินงบประมาณ ' + (mid - S.bud) + ' ฿</span>' : '<span class="ok">เหลือ ' + (S.bud - mid) + ' ฿</span>') + '</div></div>';
+    if(over) html += '<p class="note pink">ตัวเลือกที่ถูกที่สุดตามวิธีเดินทางที่เลือกยังเกินงบ ลองเพิ่มวิธีเดินทาง ลดจุดแวะ หรือเพิ่มงบ</p>';
+    else if(S.fitted) html += '<p class="note">ระบบเปลี่ยนบางช่วงเป็นตัวเลือกที่ถูกลงเพื่อให้อยู่ในงบ</p>';
+  }
+  if(S.missing) html += '<p class="note pink">มี ' + S.missing + ' ช่วงที่ยังไม่มีตัวเลือกตามวิธีเดินทางที่เลือก ตัวเลขรวมยังไม่ครบ</p>';
+  html += '</section>';
+  P.legs.forEach((L, k) => {
+    html += legCard(L, P);
+    if(L.stayAfter > 0 && k < P.legs.length - 1){
+      html += '<div class="stayrow">แวะที่ ' + LET[L.i + 1] + ' ' + esc(L.b.name) + ' ' + fmtMin(L.stayAfter) + ' · ออกต่อ ' + hhmm(L.arrive + L.stayAfter) + '</div>';
+    }
+  });
+  out.innerHTML = html;
+}
+$('#plan').addEventListener('click', e => {
+  const a = e.target.closest('button.alt');
+  if(a){
+    const L = current.legs.find(x => x.i === +a.dataset.leg); if(!L) return;
+    state.over[L.i + '|' + L.a.name + '>' + L.b.name] = a.dataset.sig; renderPlan(); refreshShare(); return;
+  }
+  const r = e.target.closest('button[data-auto]');
+  if(r){ const L = current.legs.find(x => x.i === +r.dataset.auto); delete state.over[L.i + '|' + L.a.name + '>' + L.b.name]; renderPlan(); refreshShare(); }
+});
+
+/* ---------- ข้อความแชร์ ---------- */
+function shareText(){
+  const P = current;
+  if(!P || P.incomplete) return '';
+  const S = P.sum, title = $('#ptitle').value.trim() || 'แผนเดินทาง';
+  const lines = [title, 'ออกเดินทาง ' + hhmm(toMin(state.start)) + ' น.', ''];
+  const seq = state.stops.slice(); if(state.round) seq.push(state.stops[0]);
+  P.legs.forEach((L, k) => {
+    lines.push(LET[L.i] + ' ' + L.a.name + (k === 0 ? ' (ต้นทาง)' : ' (ถึง ' + hhmm(P.legs[k - 1].arrive) + ' น.' + (L.depart > P.legs[k - 1].arrive ? ' แวะ ' + fmtMin(L.depart - P.legs[k - 1].arrive) : '') + ')'));
+    if(L.pick) lines.push('   ↓ ' + optLabel(L.pick) + ' · ' + fmtMin(L.pick.min) + ' · ' + fmtFare(L.pick.lo, L.pick.hi, L.pick.est));
+    else if(L.same) lines.push('   (ที่เดียวกัน)'); else lines.push('   ↓ ยังไม่มีตัวเลือก');
+  });
+  const lastIdx = P.legs.length - 1;
+  lines.push((state.round ? LET[0] : LET[P.legs[lastIdx].i + 1]) + ' ' + P.legs[lastIdx].b.name + ' (ถึง ' + hhmm(S.end) + ' น.)');
+  lines.push('');
+  lines.push('รวมเดินทาง ' + fmtMin(S.min) + ' ค่าใช้จ่ายประมาณ ' + Math.round(S.mid) + ' บาท (' + S.lo + '–' + S.hi + ')' + (S.bud > 0 ? ' งบ ' + S.bud + ' บาท' : ''));
+  lines.push('ค่าประมาณจาก PAI DEE ควรเช็กก่อนเดินทางจริง');
+  return lines.join('\n');
+}
+function refreshShare(){ $('#sharetext').value = shareText(); }
+function setStatus(t, bad){ const s = $('#status'); s.textContent = t; s.style.color = bad ? 'var(--pink-ink)' : 'var(--ok)'; }
+$('#copy').addEventListener('click', async () => {
+  const t = $('#sharetext').value;
+  if(!t){ setStatus('เลือกจุดหมายให้ครบก่อน', true); return; }
+  try{ await navigator.clipboard.writeText(t); setStatus('คัดลอกแล้ว วางส่งใน LINE หรือแชตได้เลย'); }
+  catch(e){ const ta = $('#sharetext'); ta.focus(); ta.select(); setStatus('คัดลอกอัตโนมัติไม่ได้ เลือกข้อความไว้แล้ว กดคัดลอกเองได้เลย', true); }
+});
+
+/* ---------- กระดานแผนที่บันทึกไว้ (db) ---------- */
+let DB = null, canWrite = null;
+function planDoc(){
+  const P = current; const S = P.sum;
+  return {
+    title:$('#ptitle').value.trim() || 'แผนเดินทาง', author:$('#pauthor').value.trim(), createdAt:Date.now(),
+    stops:state.stops.map(p => p.name), stay:state.stay.slice(), modes:Object.assign({}, state.modes), pri:state.pri,
+    budget:state.budget === '' ? null : Number(state.budget), start:state.start, round:state.round, peak:state.peak, cap20:state.cap20,
+    totalMin:S.min, totalCost:Math.round(S.mid), endAt:hhmm(S.end)
+  };
+}
+$('#save').addEventListener('click', async () => {
+  if(!DB || !current || current.incomplete){ setStatus('เลือกจุดหมายให้ครบก่อน', true); return; }
+  $('#save').disabled = true;
+  try{ await DB.collection('plans').add(planDoc()); setStatus('บันทึกลงกระดานแล้ว'); }
+  catch(e){ setStatus(e && e.code === 'quota_exceeded' ? 'กระดานเต็มแล้ว ลบแผนเก่าก่อนบันทึกใหม่' : 'บันทึกไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง', true); }
+  $('#save').disabled = false;
+});
+const planStore = new Map();
+function renderBoard(snap){
+  planStore.clear();
+  const rows = snap.docs.map(d => { const v = d.data(); planStore.set(d.id, v); return {id:d.id, v}; });
+  $('#boardSec').hidden = false;
+  $('#plist').innerHTML = rows.length ? rows.map(r => {
+    const v = r.v, when = new Date(v.createdAt || 0);
+    return '<li class="pitem"><div><b>' + esc(v.title) + '</b><span>' + esc((v.stops || []).join(' → ')) + (v.round ? ' → กลับต้นทาง' : '') + '</span><br><span>' + (v.author ? 'โดย ' + esc(v.author) + ' · ' : '') + esc(v.totalMin ? fmtMin(+v.totalMin) : '') + ' · ≈' + esc(v.totalCost) + ' ฿ · ' + when.toLocaleDateString('th-TH', {day:'numeric', month:'short'}) + '</span></div>'
+      + '<div class="btns"><button type="button" class="btn alt2" data-open="' + esc(r.id) + '">เปิดแผน</button>' + (canWrite !== false ? '<button type="button" class="linkbtn" data-rm="' + esc(r.id) + '">ลบ</button>' : '') + '</div></li>';
+  }).join('') : '<li class="hint">ยังไม่มีแผนที่บันทึกไว้ กด "บันทึกลงกระดาน" เพื่อเพิ่มแผนแรก</li>';
+}
+$('#plist').addEventListener('click', async e => {
+  const o = e.target.closest('button[data-open]');
+  if(o){ const v = planStore.get(o.dataset.open); if(v){ applyData(v); syncControls(); renderStops(); update(); window.scrollTo({top:0, behavior:'smooth'}); setStatus('เปิดแผน "' + v.title + '" แล้ว'); } return; }
+  const r = e.target.closest('button[data-rm]');
+  if(r && DB){ try{ await DB.doc('plans/' + r.dataset.rm).delete(); setStatus('ลบแผนแล้ว'); }catch(err){ setStatus('ลบไม่ได้ ต้องมีสิทธิ์แก้ไขหน้านี้', true); } }
+});
+(async function initDb(){
+  try{
+    if(!window.claude || !window.claude.use) return;
+    const user = await window.claude.use('user');
+    if(user && user.can) { try{ canWrite = user.can('data.write'); }catch(e){} }
+    DB = await window.claude.use('db');
+    if(!DB) return;
+    if(canWrite !== false) $('#save').hidden = false;
+    DB.collection('plans').orderBy('createdAt', 'desc').limit(20).onSnapshot(renderBoard, () => { $('#boardSec').hidden = true; });
+  }catch(e){ DB = null; }
+})();
+
+/* ---------- เริ่มต้น ---------- */
+function update(){ renderPlan(); refreshShare(); saveDraft(); }
+(function init(){
+  let d = null;
+  try{ d = JSON.parse(localStorage.getItem('paidee.draft') || 'null'); }catch(e){}
+  if(d && Array.isArray(d.stops) && d.stops.every(n => !n || byName(n))) applyData(d);
+  else applyData({stops:['ปากเกร็ด', 'สยามพารากอน', 'ตลาดนัดจตุจักร'], stay:[0, 60, 0]});
+  syncControls(); renderStops(); update();
+})();
+</script>
+
+</body></html>
